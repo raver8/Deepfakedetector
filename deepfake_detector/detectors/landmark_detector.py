@@ -4,7 +4,13 @@ Face landmark-based deepfake detector.
 
 import cv2
 import numpy as np
-import dlib
+try:
+    import dlib
+    DLIB_AVAILABLE = True
+except ImportError:
+    DLIB_AVAILABLE = False
+    dlib = None
+    
 from typing import Union, Tuple, Dict, Any, List
 from .base import BaseDetector
 
@@ -28,6 +34,13 @@ class LandmarkDetector(BaseDetector):
     def load_model(self) -> None:
         """Load face detection and landmark prediction models."""
         try:
+            if not DLIB_AVAILABLE:
+                print("Warning: dlib not available, using OpenCV face detection only")
+                self.face_detector = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+                self.landmark_predictor = None
+                self.is_loaded = True
+                return
+                
             # Initialize dlib face detector
             self.face_detector = dlib.get_frontal_face_detector()
             
@@ -70,7 +83,31 @@ class LandmarkDetector(BaseDetector):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         
         # Detect faces
-        faces = self.face_detector(gray)
+        if DLIB_AVAILABLE and hasattr(self.face_detector, '__call__'):
+            # Using dlib detector
+            faces = self.face_detector(gray)
+        else:
+            # Using OpenCV detector 
+            faces_cv = self.face_detector.detectMultiScale(gray, 1.1, 4)
+            # Convert to dlib rectangle format
+            faces = []
+            for (x, y, w, h) in faces_cv:
+                # Create a simple rectangle object
+                class Rectangle:
+                    def __init__(self, x, y, w, h):
+                        self._left = x
+                        self._top = y
+                        self._right = x + w
+                        self._bottom = y + h
+                    
+                    def left(self): return self._left
+                    def top(self): return self._top
+                    def right(self): return self._right
+                    def bottom(self): return self._bottom
+                    def width(self): return self._right - self._left
+                    def height(self): return self._bottom - self._top
+                
+                faces.append(Rectangle(x, y, w, h))
         
         if len(faces) == 0:
             return 0.0, {"error": "No faces detected for landmark analysis"}

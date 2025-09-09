@@ -89,6 +89,8 @@ def save_detection_result(result: dict, output_path: str) -> None:
             return int(obj)
         elif isinstance(obj, np.floating):
             return float(obj)
+        elif isinstance(obj, np.bool_):
+            return bool(obj)
         elif isinstance(obj, dict):
             return {key: convert_numpy(value) for key, value in obj.items()}
         elif isinstance(obj, list):
