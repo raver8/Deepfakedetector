@@ -1,7 +1,7 @@
 # Deepfakedetector
 Techniques
 
-I've created an enhanced deepfake detection system that significantly improves upon the basic SVD approach in your document. Here are the key improvements:
+This is an enhanced deepfake detection system that significantly improves upon the basic SVD approach in your document. Here are the key improvements:
 Major Enhancements:
 1. Multi-Modal Feature Analysis
 
